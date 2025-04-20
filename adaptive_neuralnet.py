@@ -99,6 +99,30 @@ def count_total_params(model: nn.Module) -> int:
     return sum(p.numel() for p in model.parameters())
 
 
+def compress_and_report(model: nn.Module, threshold: float = 0.01) -> dict:
+    """
+    Compress the model using a threshold and print summary statistics.
+    """
+    print("🔧 Compressing model with threshold:", threshold)
+    total_before = count_total_params(model)
+    compress_parameters(model, threshold)
+    total_after = count_nonzero_params(model)
+
+    report = {
+        "compressed": total_after,
+        "original": total_before,
+        "compression_ratio": round((1 - total_after / total_before) * 100, 2)
+    }
+
+    print("✅ Compression complete:")
+    print(" - Original parameters:", report["original"])
+    print(" - Remaining (non-zero):", report["compressed"])
+    print(" - Compression ratio:", f'{report["compression_ratio"]}%')
+
+    return report
+
+
+# Optional for CLI testing
 if __name__ == "__main__":
     import numpy as np
 
@@ -122,6 +146,4 @@ if __name__ == "__main__":
     prediction = forecast(model, X[-1], n_steps=5)
     print(prediction)
 
-    compress_parameters(model, threshold=0.05)
-    print("Compressed parameter count:", count_nonzero_params(model))
-    print("Total parameters:", count_total_params(model))
+    compress_and_report(model, threshold=0.05)
